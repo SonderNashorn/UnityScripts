@@ -7,6 +7,6 @@ public class SpeechScriptableObjects : ScriptableObject
     public int offerToSell;
     public string speakerName;
     public List<TextManager.SpeechGroup> speechGroup;
+    public int drugID;
     public Texture2D drugSprite;
-
 }

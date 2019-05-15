@@ -13,26 +13,32 @@ public class TextManager : MonoBehaviour
         public string speechText;
     }
 
-    
-    //[SerializeField] CanvasGroup TextboxCanvasGroup;    No need for Buttons
-    //public Text speakerName;                  
+    //public Text speakerName;  
+
+    //answereddialogue = left or top speech
+    //current dialog = answereddialogue[currentSpeechIndex] 
     public Text dialogueText;
-    public Text playerDialogueText;
-    //[SerializeField] AudioSource voiceLines;
-
-    //reference to the scriptable objects script
-    public SpeechScriptableObjects currentSpeech;
-    [HideInInspector]
-    public SpeechScriptableObjects continueConversation;
-    [HideInInspector]
-    public SpeechScriptableObjects sellOffer;
-    [HideInInspector]
-    public SpeechScriptableObjects endDialogue;
-
-    private RayCast ray;
-
+    public Text playerRightDialogueText;
+    public Text playerLeftDialogueText;
+    public int currentDayIndex;
     public int currentSpeechIndex;
     public int currentPlayerSpeechIndex;
+
+    //reference to the scriptable objects script
+
+
+   // [HideInInspector]
+   // public SpeechTree nPCSpeechTreeLeft;
+   // [HideInInspector]
+    //public SpeechTree nPCSpeechTreeRight;
+   // [HideInInspector]    
+    public SpeechScriptableObjects nPCAnswerSpeech;
+   // [HideInInspector]
+    public SpeechScriptableObjects playerAnswer;
+    //[HideInInspector]
+    //public SpeechScriptableObjects sellOffer;
+    //[HideInInspector]
+    //public SpeechScriptableObjects endDialogue;
 
     [HideInInspector]
     public bool speechInProgress = false;
@@ -41,11 +47,11 @@ public class TextManager : MonoBehaviour
 
     public static TextManager instance;
 
+    
+    private RayCast ray;
     private Interaction interaction;
     //private string defaultGreeting;
     #endregion
-
-
 
     #region NPCDialogueMethods
     private void Awake()
@@ -57,15 +63,10 @@ public class TextManager : MonoBehaviour
     public void SetSpeechNext()
     {
         currentSpeechIndex++;
-        if (currentSpeech.speechGroup.Count > currentSpeechIndex)
-        {
-            FillSpeech();
-        }
-        else
-        {
-            StartCoroutine(EndSpeechCroutine());
-            //dialogueText.text = null;
-        }
+        if (nPCAnswerSpeech.speechGroup.Count > currentSpeechIndex)        
+            FillSpeech();        
+        else        
+            StartCoroutine(EndSpeechCroutine());        
     }
 
     public void StartSpeech(SpeechScriptableObjects speech)
@@ -79,37 +80,51 @@ public class TextManager : MonoBehaviour
             yield return null;
 
         speechInProgress = true;
-        currentSpeech = speech;
-
-        
-        FillSpeech();
-
+        nPCAnswerSpeech = speech;
     }
     
     IEnumerator EndSpeechCroutine()
     {
-        ResetDialogues();
-
+        //ResetDialogues();
+        speechInProgress = false;
+        dialogueText.text = null;
         yield return null;
         
         
     }
 
+    //I'll probably need to change the from void to send and receive.
+    /*public int FillSpeech()
+        
+    */
     public void FillSpeech()
     {
-        SpeechGroup s = currentSpeech.speechGroup[currentSpeechIndex];       
+        SpeechGroup s = nPCAnswerSpeech.speechGroup[currentSpeechIndex];       
         dialogueText.text = s.speechText;
-        
     }
     #endregion
 
     #region PlayerDialogueMethods
-    public void SetPlayerSpeechNext()
+
+    public void SetPlayerLeftSpeechNext()
     {
         currentPlayerSpeechIndex++;
-        if (continueConversation.speechGroup.Count > currentPlayerSpeechIndex)
+        if (playerAnswer.speechGroup.Count > currentPlayerSpeechIndex)
+        {            
+            FillPlayerLeftSpeech();
+        }
+        else
         {
-            FillPlayerSpeech();
+            StartCoroutine(EndPlayerSpeechCroutine());
+            //playerDialogueText.text = defaultGreeting;
+        }
+    }
+    public void SetPlayerRightSpeechNext()
+    {
+        currentPlayerSpeechIndex++;
+        if (playerAnswer.speechGroup.Count > currentPlayerSpeechIndex)
+        {
+            FillPlayerRightSpeech();
         }
         else
         {
@@ -118,45 +133,80 @@ public class TextManager : MonoBehaviour
         }
     }
 
-    public void StartPlayerSpeech(SpeechScriptableObjects pspeech)
+    private void FillPlayerRightSpeech()
     {
-        StartCoroutine(StartPlayerSpeechCroutine(pspeech));
+        SpeechGroup pSpeech = playerAnswer.speechGroup[currentPlayerSpeechIndex];
+        playerRightDialogueText.text = pSpeech.speechText;
     }
 
-    IEnumerator StartPlayerSpeechCroutine(SpeechScriptableObjects pspeech)
+
+    private void FillPlayerLeftSpeech()
+    {
+        SpeechGroup pSpeech = playerAnswer.speechGroup[currentPlayerSpeechIndex];
+        playerLeftDialogueText.text = pSpeech.speechText;
+    }
+     
+
+    public void StartPlayerLeftSpeech(SpeechScriptableObjects playerSpeech)
+        {
+            StartCoroutine(StartPlayerLeftSpeechCroutine(playerSpeech));
+        }
+
+    
+    public void StartPlayerRightSpeech(SpeechScriptableObjects playerSpeech)
+        {
+            StartCoroutine(StartPlayerRightSpeechCroutine(playerSpeech));
+        }
+     
+
+    IEnumerator StartPlayerRightSpeechCroutine(SpeechScriptableObjects playerSpeech)
     {
         while (playerSpeechInProgress)
             yield return null;
 
         playerSpeechInProgress = true;
-        continueConversation = pspeech;
-
+        playerAnswer = playerSpeech;
+        
         currentPlayerSpeechIndex = 0;
-        FillPlayerSpeech();
-
+        FillPlayerRightSpeech();
+        
     }
+
+    
+     IEnumerator StartPlayerLeftSpeechCroutine(SpeechScriptableObjects playerSpeech)
+    {
+        while (playerSpeechInProgress)
+            yield return null;
+
+        playerSpeechInProgress = true;
+        playerAnswer = playerSpeech;
+        
+        currentPlayerSpeechIndex = 0;
+        FillPlayerRightSpeech();
+    }
+         
+
     IEnumerator EndPlayerSpeechCroutine()
-    {
-        
-        playerSpeechInProgress = false;
-        yield return null;            
-    }
-
-    public void ResetDialogues()
-    {
-        currentSpeechIndex = 0;
-        currentPlayerSpeechIndex = 0;
-        
-    }
-
-    private void FillPlayerSpeech()
     {        
-        SpeechGroup s = continueConversation.speechGroup[currentPlayerSpeechIndex];
-        playerDialogueText.text = s.speechText;
+        playerSpeechInProgress = false;
+        playerRightDialogueText.text = null;
+        playerLeftDialogueText.text = null;
 
+        yield return null;
     }
+    
+   
     #endregion
 
 }
 
 //currentSpeech = ray.hitObj.GetComponent<NPCDialogue>().npcSpeech;
+
+/*
+public void ResetDialogues()
+{
+    currentSpeechIndex = 0;
+    currentPlayerSpeechIndex = 0;
+    //interaction.image = null;
+}
+*/
